@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {StableCoin} from "../src/StableCoin.sol";
@@ -82,5 +83,83 @@ contract StableCoinTest is BaseTest {
         vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, minter, adminRole));
         vm.prank(minter);
         coin.setMinterAllowance(minter, type(uint256).max);
+    }
+
+    // --- step 4: pause & blocklist ------------------------------------------
+
+    function _mintToAlice(uint256 amount) internal {
+        vm.prank(minter);
+        coin.mint(alice, amount);
+    }
+
+    function _blocklist(address account) internal {
+        vm.prank(blocklister);
+        coin.setBlocklisted(account, true);
+    }
+
+    function test_RevertWhen_TransferWhilePaused() public {
+        _mintToAlice(100 * ONE_DOLLAR);
+
+        vm.prank(pauser);
+        coin.pause();
+
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        vm.prank(alice);
+        coin.transfer(bob, 10 * ONE_DOLLAR);
+    }
+
+    function test_UnpauseRestoresTransfers() public {
+        _mintToAlice(100 * ONE_DOLLAR);
+
+        vm.startPrank(pauser);
+        coin.pause();
+        coin.unpause();
+        vm.stopPrank();
+
+        vm.prank(alice);
+        coin.transfer(bob, 10 * ONE_DOLLAR);
+
+        assertEq(coin.balanceOf(bob), 10 * ONE_DOLLAR);
+        assertEq(coin.balanceOf(alice), 90 * ONE_DOLLAR);
+    }
+
+    function test_RevertWhen_BlocklistedSenderTransfers() public {
+        _mintToAlice(100 * ONE_DOLLAR);
+        _blocklist(alice);
+
+        vm.expectRevert(abi.encodeWithSelector(StableCoin.AccountBlocklisted.selector, alice));
+        vm.prank(alice);
+        coin.transfer(bob, 10 * ONE_DOLLAR);
+    }
+
+    function test_RevertWhen_BlocklistedRecipientReceives() public {
+        _mintToAlice(100 * ONE_DOLLAR);
+        _blocklist(bob);
+
+        vm.expectRevert(abi.encodeWithSelector(StableCoin.AccountBlocklisted.selector, bob));
+        vm.prank(alice);
+        coin.transfer(bob, 10 * ONE_DOLLAR);
+    }
+
+    function test_RevertWhen_BlocklistedSpenderUsesTransferFrom() public {
+        address spender = makeAddr("spender");
+        _mintToAlice(100 * ONE_DOLLAR);
+
+        vm.prank(alice);
+        coin.approve(spender, 50 * ONE_DOLLAR);
+        _blocklist(spender);
+
+        // from (alice) and to (bob) are both clean; only the msg.sender check catches this.
+        vm.expectRevert(abi.encodeWithSelector(StableCoin.AccountBlocklisted.selector, spender));
+        vm.prank(spender);
+        coin.transferFrom(alice, bob, 50 * ONE_DOLLAR);
+    }
+
+    function test_RevertWhen_MintToBlocklisted() public {
+        _blocklist(alice);
+
+        vm.expectRevert(abi.encodeWithSelector(StableCoin.AccountBlocklisted.selector, alice));
+        vm.prank(minter);
+        coin.mint(alice, 1);
     }
 }
