@@ -10,10 +10,17 @@ abstract contract BaseTest is Test {
     string internal constant NAME = "Test USD";
     string internal constant SYMBOL = "TUSD";
 
+    uint256 internal constant ONE_DOLLAR = 1e6; // 6 decimals
+    uint256 internal constant MINTER_ALLOWANCE = 1_000_000 * ONE_DOLLAR;
+
     StableCoin internal implementation;
     StableCoin internal coin; // the proxy, typed as StableCoin; always test through this
 
     address internal admin = makeAddr("admin");
+    address internal minter = makeAddr("minter");
+    address internal pauser = makeAddr("pauser");
+    address internal blocklister = makeAddr("blocklister");
+    address internal upgrader = makeAddr("upgrader");
     address internal alice = makeAddr("alice");
     address internal bob = makeAddr("bob");
 
@@ -24,5 +31,19 @@ abstract contract BaseTest is Test {
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
 
         coin = StableCoin(address(proxy));
+
+        // Read role ids before startPrank so the getter calls don't run as admin.
+        bytes32 minterRole = coin.MINTER_ROLE();
+        bytes32 pauserRole = coin.PAUSER_ROLE();
+        bytes32 blocklisterRole = coin.BLOCKLISTER_ROLE();
+        bytes32 upgraderRole = coin.UPGRADER_ROLE();
+
+        vm.startPrank(admin);
+        coin.grantRole(minterRole, minter);
+        coin.grantRole(pauserRole, pauser);
+        coin.grantRole(blocklisterRole, blocklister);
+        coin.grantRole(upgraderRole, upgrader);
+        coin.setMinterAllowance(minter, MINTER_ALLOWANCE);
+        vm.stopPrank();
     }
 }
