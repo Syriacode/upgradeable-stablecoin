@@ -1,5 +1,9 @@
 # Project 02 — Build a Mintable Stablecoin (step-by-step guide)
 
+> **Note:** this guide was written for the project's original home, the `02-stablecoin/` folder of
+> [Mini-Blockchain](https://github.com/Syriacode/Mini-Blockchain). In this repo, that folder is the repo root,
+> so read `02-stablecoin/` as `./` and `../.gitmodules` as `.gitmodules`.
+
 **Goal:** build the core of a USDC-style stablecoin in Solidity, behind an upgradeable proxy, with minter
 allowances, pause, a blocklist, and fuzz + invariant tests, then deploy it to a local chain.
 

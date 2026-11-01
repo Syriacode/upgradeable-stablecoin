@@ -1,4 +1,6 @@
-# 02 — Mintable Stablecoin
+# Upgradeable Stablecoin
+
+[![CI](https://github.com/Syriacode/upgradeable-stablecoin/actions/workflows/ci.yml/badge.svg)](https://github.com/Syriacode/upgradeable-stablecoin/actions/workflows/ci.yml)
 
 The on-chain core of a USDC-style stablecoin, written in Solidity with Foundry and OpenZeppelin v5:
 
@@ -7,7 +9,8 @@ The on-chain core of a USDC-style stablecoin, written in Solidity with Foundry a
 - with **separated roles**, **capped minter allowances**, an **emergency pause**, and a **compliance blocklist**,
 - covered by unit, fuzz, invariant, and upgrade tests, plus a CI pipeline.
 
-Everything runs on a local test chain with play money. This was built step by step from [GUIDE.md](GUIDE.md).
+Everything runs on a local test chain with play money. This was built step by step from [GUIDE.md](GUIDE.md), originally as Project 02 of my
+[Mini-Blockchain](https://github.com/Syriacode/Mini-Blockchain) learning series.
 
 ## Roles
 
@@ -36,7 +39,7 @@ UPGRADE_CHECKLIST.md         what a team checks before upgrading a live token
 
 ## Run the tests
 
-From this directory, after cloning with submodules (`git clone --recursive`, or `git submodule update --init --recursive`):
+From the repo root, after cloning with submodules (`git clone --recursive`, or `git submodule update --init --recursive`):
 
 ```bash
 forge build
@@ -53,7 +56,7 @@ The invariant suite runs 64 random sequences of 64 calls (`[invariant]` in `foun
 - `totalSupply == sum of all balances`,
 - `totalSupply <= the minter's original allowance`.
 
-CI (`.github/workflows/stablecoin.yml` at the repo root) runs format check, build with contract sizes, and tests on every push and PR.
+CI (`.github/workflows/ci.yml`) runs format check, build with contract sizes, and tests on every push and PR.
 
 ## Deploy locally
 
@@ -63,7 +66,7 @@ Start a local chain in a second terminal:
 anvil
 ```
 
-Then, in this directory (Git Bash syntax; these are anvil's public test accounts, never use them on a real network):
+Then, from the repo root (Git Bash syntax; these are anvil's public test accounts, never use them on a real network):
 
 ```bash
 export RPC_URL=http://127.0.0.1:8545
