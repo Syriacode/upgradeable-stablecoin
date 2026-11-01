@@ -77,6 +77,19 @@ contract StableCoinTest is BaseTest {
         assertEq(coin.balanceOf(minter), minted - burned);
     }
 
+    function testFuzz_MintThenBurn(uint256 amount) public {
+        amount = bound(amount, 1, MINTER_ALLOWANCE);
+
+        vm.startPrank(minter);
+        coin.mint(minter, amount);
+        coin.burn(amount);
+        vm.stopPrank();
+
+        assertEq(coin.totalSupply(), 0);
+        assertEq(coin.balanceOf(minter), 0);
+        assertEq(coin.minterAllowance(minter), MINTER_ALLOWANCE - amount); // burning doesn't refund allowance
+    }
+
     function test_RevertWhen_NonAdminSetsAllowance() public {
         bytes32 adminRole = coin.DEFAULT_ADMIN_ROLE();
 
