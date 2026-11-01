@@ -59,7 +59,9 @@ contract StableCoinTest is BaseTest {
         // Read the role BEFORE vm.prank: the getter is itself a call and would consume the prank.
         bytes32 minterRole = coin.MINTER_ROLE();
 
-        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, minterRole));
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, minterRole)
+        );
         vm.prank(alice);
         coin.mint(alice, 1);
     }
@@ -93,7 +95,9 @@ contract StableCoinTest is BaseTest {
     function test_RevertWhen_NonAdminSetsAllowance() public {
         bytes32 adminRole = coin.DEFAULT_ADMIN_ROLE();
 
-        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, minter, adminRole));
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, minter, adminRole)
+        );
         vm.prank(minter);
         coin.setMinterAllowance(minter, type(uint256).max);
     }
